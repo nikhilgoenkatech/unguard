@@ -19,7 +19,7 @@ metadata:
 build:
   artifacts:
     # context is the directory with the Dockerfile for that image
-    - image: unguard-envoy-proxy
+    - image: docker.io/nikhilgoenka/unguard-envoy-proxy
       context: src/envoy-proxy
 #    - image: unguard-frontend
 #      context: src/frontend-nextjs
