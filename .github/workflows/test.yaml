@@ -278,11 +278,11 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
         run: |
-          kubectl set image deployment/unguard-membership-service \
-            membership-service=docker.io/nikhilgoenka/unguard-membership-service:${RELEASE_ID} \
+          kubectl set image deployment/unguard-proxy-service \
+            membership-service=docker.io/nikhilgoenka/unguard-proxy-service:${RELEASE_ID} \
             --namespace=unguard
       
-          kubectl patch deployment unguard-membership-service \
+          kubectl patch deployment unguard-proxy-service \
             -n unguard \
             --patch "$(cat <<EOF
           {
@@ -291,11 +291,11 @@ jobs:
                 "spec": {
                   "containers": [
                     {
-                      "name": "membership-service",
+                      "name": "proxy-service",
                       "env": [
                         {
                           "name": "DT_RELEASE_VERSION",
-                          "value": "v0"
+                          "value": "v1"
                         },
                         {
                           "name": "DT_RELEASE_STAGE",
@@ -304,6 +304,10 @@ jobs:
                         {
                           "name": "DT_RELEASE_BUILD_VERSION",
                           "value": "${RELEASE_ID}"
+                        },
+                        {
+                          "name": "DT_RELEASE_PRODUCT",
+                          "value": "unguard"
                         }
                       ]
                     }
