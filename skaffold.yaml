@@ -19,8 +19,8 @@ metadata:
 build:
   artifacts:
     # context is the directory with the Dockerfile for that image
-#    - image: unguard-envoy-proxy
-#      context: src/envoy-proxy
+    - image: unguard-envoy-proxy
+      context: src/envoy-proxy
 #    - image: unguard-frontend
 #      context: src/frontend-nextjs
 #    - image: unguard-microblog-service # adapt jib patch index below if you move this item
