@@ -20,7 +20,7 @@ import com.uber.jaeger.httpclient.Constants;
 import com.uber.jaeger.httpclient.TracingResponseInterceptor;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-import io.opentracing.tag.Tags;
+io.opentracing.tag.Tags;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -72,20 +72,38 @@ public class ProxyController {
 
     @RequestMapping("/")
     public String proxyUrlWithHttpClient(@RequestHeader("Host") String host, @RequestParam String url, @RequestParam String header) throws IOException {
-
-        /* can add additional headers by sending something like "1\u560d\u560aX-But-Not-This-One: oh no!"
-           in the header field */
+        // SSRF mitigation: validate and restrict user-supplied URLs
         logger.info(url);
-
         tracer.activeSpan().setTag("http.host", host);
+
+        // Only allow http/https URLs
+        if (!url.matches("^(https?://)[^/]+(/.*)?$")) {
+            throw new IllegalArgumentException("Invalid or unsupported URL format");
+        }
+        // Restrict to allow-listed domains (example: only allow public domains)
+        String[] allowedDomains = {"example.com", "api.example.com"}; // TODO: update with your safe domains
+        boolean allowed = false;
+        try {
+            java.net.URL parsedUrl = new java.net.URL(url);
+            String hostName = parsedUrl.getHost();
+            for (String domain : allowedDomains) {
+                if (hostName.equalsIgnoreCase(domain)) {
+                    allowed = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Malformed URL");
+        }
+        if (!allowed) {
+            throw new SecurityException("Access to this domain is not allowed");
+        }
 
         CloseableHttpResponse execute = null;
         HttpContext httpContext = new BasicHttpContext();
         try {
             HttpGet httpget = new HttpGet(url);
-            // let the user chose their own language here
             httpget.addHeader("Accept-Language", header);
-
             execute = httpclient.execute(httpget, httpContext);
             InputStream content = execute.getEntity().getContent();
             String s = IOUtils.toString(content, Charset.defaultCharset());
@@ -93,7 +111,6 @@ public class ProxyController {
             return s;
         } catch (Exception e) {
             finishCurrentSpanWithError(httpContext, e);
-
             return e.getMessage();
         } finally {
             if (execute != null) {
@@ -139,70 +156,58 @@ public class ProxyController {
      * @param url the URL to fetch data from
      * @return base64 jpg image
      * @throws IOException
-     * @throws InterruptedException
      */
     @GetMapping(
             value = "/image",
             produces = MediaType.IMAGE_JPEG_VALUE
     )
     public @ResponseBody
-    String proxyUrlWithCurl(@RequestParam String url) throws IOException, InterruptedException {
-        File temporaryJpgFile = new File(String.format("/tmp/img-%d.jpg", System.currentTimeMillis()));
+    String proxyUrlWithCurl(@RequestParam String url) throws IOException {
+        // Validate the URL to ensure it is safe
+        if (!url.matches("^(https?://)[^/]+(/.*)?$")) {
+            throw new IllegalArgumentException("Invalid or unsupported URL format");
+        }
+        // Restrict to allow-listed domains (example: only allow public domains)
+        String[] allowedDomains = {"example.com", "api.example.com"}; // TODO: update with your safe domains
+        boolean allowed = false;
+        try {
+            java.net.URL parsedUrl = new java.net.URL(url);
+            String hostName = parsedUrl.getHost();
+            for (String domain : allowedDomains) {
+                if (hostName.equalsIgnoreCase(domain)) {
+                    allowed = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Malformed URL");
+        }
+        if (!allowed) {
+            throw new SecurityException("Access to this domain is not allowed");
+        }
 
         Span curlSpan = tracer.buildSpan("/image")
-                .withTag("peer.address", url) // we use this instead of url because it technically does not need to be one
+                .withTag("peer.address", url)
                 .withTag(Tags.COMPONENT, "curl")
                 .withTag(Tags.SPAN_KIND, Tags.SPAN_KIND_CLIENT)
                 .start();
 
-        /*
-         * VULNERABLE CODE BELOW
-         * it's never a good idea to not sanitize a user controlled URL
-         */
-        String[] command = {"/bin/sh", "-c", "curl --silent -S " + url + " --max-time 10 --output " + temporaryJpgFile.getAbsolutePath()};
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(new File("/home/"));
-        Process process = processBuilder.start();
-
-		BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-        String errline;
-        while ((errline = err.readLine()) != null) {
-            logger.warn("ERR: {}", errline);
-        }
-
-		/*
-		 * wait until process completes, this should be always after the
-		 * input_stream of ProcessBuilder is read to avoid deadlock
-		 * situations
-		 */
-		process.waitFor();
-
-        // close the buffered readers
-        err.close();
-
-        /* exit code can be obtained only after process completes, 0
-         * indicates a successful completion
-         */
-        int exitCode = process.exitValue();
-        logger.info("curl exit code: {}", exitCode);
-        curlSpan.log("curl exit code: " + exitCode);
-
-        // finally destroy the process
-        process.destroy();
-        if (exitCode != 0) {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+            try (CloseableHttpResponse response = client.execute(request)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    throw new IOException("Failed to fetch image, HTTP code: " + response.getStatusLine().getStatusCode());
+                }
+                byte[] imageBytes = IOUtils.toByteArray(response.getEntity().getContent());
+                String base64Image = encodeBase64(imageBytes);
+                return String.format("data:image/jpg;base64,%s", base64Image);
+            }
+        } catch (Exception e) {
             curlSpan.setTag(Tags.ERROR, true);
+            curlSpan.log(e.getMessage());
+            throw e;
+        } finally {
+            curlSpan.finish();
         }
-        curlSpan.finish();
-
-        FileInputStream fis = new FileInputStream(temporaryJpgFile);
-
-        byte[] bytes = IOUtils.toByteArray(fis);
-
-        String base64Image = encodeBase64(bytes);
-        Files.deleteIfExists(temporaryJpgFile.toPath());
-
-        return String.format("data:image/jpg;base64,%s", base64Image);
     }
-
 }
