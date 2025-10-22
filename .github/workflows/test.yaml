@@ -2,12 +2,12 @@ name: Run Skaffold Pipeline, Deploy to EKS and run unguard helm test
 on:
   push:
     branches:
-      - code-vulnerabilities
+      - code-vulnerability
     paths:
       - src/**
       - skaffold.yaml
       - chart/**
-      - code-vulnerabilities/**
+      - code-vulnerability/**
 
   pull_request:
     paths:
