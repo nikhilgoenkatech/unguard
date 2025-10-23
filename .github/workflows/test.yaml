@@ -262,14 +262,28 @@ jobs:
           command: build
           tag: ${{ env.RELEASE_ID }}
           push: true
-
+          
+      - name: Logout from Docker
+        env:
+          GITHUB_STEP: Skaffold build and push
+          OTLP_PROTOCOL: HTTPS
+          RELEASE_ID: ${{ env.RELEASE_VERSION }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}      
+        if: always()
+        run: docker logout
 
       - name: Deploy updated image to EKS
         env:
           GITHUB_STEP: Deploy and pass release info
           OTLP_PROTOCOL: HTTPS
           RELEASE_ID: ${{ env.RELEASE_VERSION }}
-          IMAGE_TAG_unguard_membership_service: ${{ env.IMAGE_TAG_unguard_membership_service }}          
+          IMAGE_TAG_unguard_proxy_service: ${{ env.IMAGE_TAG_unguard_proxy_service }}          
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
           OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
@@ -332,5 +346,12 @@ jobs:
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}      
         run: helm test unguard --namespace unguard --timeout 10m0s --logs
 
+#      - name: Kill hanging OpenTelemetry processes
+#        if: always()
+#        run: |
+#          echo "Checking for hanging OpenTelemetry processes..."
+#          ps aux | grep "relocated_bin/node20/node"
+#          pkill -f "relocated_bin/node20/node" || true
+          
 permissions:
   actions: read
