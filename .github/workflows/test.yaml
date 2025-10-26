@@ -241,11 +241,11 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
         run: |
-          kubectl set image deployment/unguard-proxy-service \
-            proxy-service=docker.io/nikhilgoenka/unguard-proxy-service:${RELEASE_ID} \
+          kubectl set image deployment/unguard-membership-service \
+            proxy-service=docker.io/nikhilgoenka/unguard-membership-service:${RELEASE_ID} \
             --namespace=unguard
       
-          kubectl patch deployment unguard-proxy-service \
+          kubectl patch deployment unguard-membership-service \
             -n unguard \
             --patch "$(cat <<EOF
           {
@@ -254,7 +254,7 @@ jobs:
                 "spec": {
                   "containers": [
                     {
-                      "name": "proxy-service",
+                      "name": "membership-service",
                       "env": [
                         {
                           "name": "DT_RELEASE_VERSION",
@@ -271,30 +271,6 @@ jobs:
                         {
                           "name": "DT_RELEASE_PRODUCT",
                           "value": "unguard"
-                        },
-                        {
-                          "name": "SERVER_PORT",
-                          "value": "8081"
-                        },
-                        {
-                          "name": "JAEGER_AGENT_HOST",
-                          "value": "agent"
-                        },
-                        {
-                          "name": "JAEGER_SAMPLER_TYPE",
-                          "value": "const"
-                        },
-                        {
-                          "name": "JAEGER_SAMPLER_PARAM",
-                          "value": "0"
-                        },
-                        {
-                          "name": "OPENTRACING_JAEGER_ENABLED",
-                          "value": "false"
-                        },
-                        {
-                          "name": "JAEGER_SERVICE_NAME",
-                          "value": "unguard-proxy-service"
                         }
                       ]
                     }
