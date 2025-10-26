@@ -67,7 +67,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
         env: 
-          GITHUB_STEP: Setting up runner
+          GITHUB_STEP: Setup, build, deploy and test unguard
           OTLP_PROTOCOL: HTTPS
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
@@ -247,41 +247,62 @@ jobs:
       
           kubectl patch deployment unguard-proxy-service \
             -n unguard \
-            --patch "$(cat <<EOF
-          {
-            "spec": {
-              "template": {
-                "spec": {
-                  "containers": [
-                    {
-                      "name": "proxy-service",
-                      "env": [
-                        {
-                          "name": "DT_RELEASE_VERSION",
-                          "value": "v1"
-                        },
-                        {
-                          "name": "DT_RELEASE_STAGE",
-                          "value": "Staging"
-                        },
-                        {
-                          "name": "DT_RELEASE_BUILD_VERSION",
-                          "value": "${RELEASE_ID}"
-                        },
-                        {
-                          "name": "DT_RELEASE_PRODUCT",
-                          "value": "unguard"
-                        }
-                      ]
-                    }
-                  ]
+            --patch "{
+              "spec": {
+                "template": {
+                  "spec": {
+                    "containers": [
+                      {
+                        "name": "proxy-service",
+                        "env": [
+                          {
+                            "name": "DT_RELEASE_VERSION",
+                            "value": "v1"
+                          },
+                          {
+                            "name": "DT_RELEASE_STAGE",
+                            "value": "Staging"
+                          },
+                          {
+                            "name": "DT_RELEASE_BUILD_VERSION",
+                            "value": "${RELEASE_ID}"
+                          },
+                          {
+                            "name": "DT_RELEASE_PRODUCT",
+                            "value": "unguard"
+                          },
+                          {
+                            "name": "SERVER_PORT",
+                            "value": "8081"
+                          },
+                          {
+                            "name": "JAEGER_AGENT_HOST",
+                            "value": "agent"
+                          },
+                          {
+                            "name": "JAEGER_SAMPLER_TYPE",
+                            "value": "const"
+                          },
+                          {
+                            "name": "JAEGER_SAMPLER_PARAM",
+                            "value": "0"
+                          },
+                          {
+                            "name": "OPENTRACING_JAEGER_ENABLED",
+                            "value": "false"
+                          },
+                          {
+                            "name": "JAEGER_SERVICE_NAME",
+                            "value": "unguard-proxy-service"
+                          }
+                        ]
+                      }
+                    ]
+                  }
                 }
               }
-            }
-          }
-          EOF
-          )"
-          
+            }"
+            
       - name: Cleanup Skaffold resources
         if: always()
         run: |
