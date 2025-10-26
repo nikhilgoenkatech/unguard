@@ -212,7 +212,7 @@ jobs:
 
       - name: Build and Push Skaffold Image
         env:
-          GITHUB_STEP: Skaffold build and push
+          GITHUB_STEP: Build unguard ${{ env.RELEASE_VERSION }}
           OTLP_PROTOCOL: HTTPS
           RELEASE_ID: ${{ env.RELEASE_VERSION }}
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
@@ -228,7 +228,7 @@ jobs:
 
       - name: Deploy updated image to EKS
         env:
-          GITHUB_STEP: Deploy and pass release info
+          GITHUB_STEP: Deploy ${{ env.RELEASE_VERSION }}
           OTLP_PROTOCOL: HTTPS
           RELEASE_ID: ${{ env.RELEASE_VERSION }}
           IMAGE_TAG_unguard_proxy_service: ${{ env.IMAGE_TAG_unguard_proxy_service }}          
