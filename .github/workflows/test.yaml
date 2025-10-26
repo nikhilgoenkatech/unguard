@@ -67,6 +67,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
         env: 
+          GITHUB_STEP: Setting up runner
           OTLP_PROTOCOL: HTTPS
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
@@ -75,7 +76,7 @@ jobs:
           OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}        
-          GITHUB_STEP: Build
+          
         with:
           cache: false
           submodules: false
