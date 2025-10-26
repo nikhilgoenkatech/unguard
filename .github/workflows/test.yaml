@@ -242,7 +242,7 @@ jobs:
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
         run: |
           kubectl set image deployment/unguard-membership-service \
-            proxy-service=docker.io/nikhilgoenka/unguard-membership-service:${RELEASE_ID} \
+            membership-service=docker.io/nikhilgoenka/unguard-membership-service:${RELEASE_ID} \
             --namespace=unguard
       
           kubectl patch deployment unguard-membership-service \
