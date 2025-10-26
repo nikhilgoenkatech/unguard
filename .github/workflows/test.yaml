@@ -244,10 +244,10 @@ jobs:
           kubectl set image deployment/unguard-membership-service \
             membership-service=docker.io/nikhilgoenka/unguard-membership-service:${RELEASE_ID} \
             --namespace=unguard
-      
+            
           kubectl patch deployment unguard-membership-service \
-            -n unguard \
-            --patch "$(cat <<EOF
+          -n unguard \
+          --patch "$(cat <<EOF
           {
             "spec": {
               "template": {
