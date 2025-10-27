@@ -85,57 +85,57 @@ jobs:
           fetch-depth: 0  # Ensures full history and tags are fetched
           
         
-      - name: Configure AWS credentials
-        env:
-          GITHUB_STEP: Setting EKS credentials
-          OTLP_PROTOCOL: HTTPS
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
-          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
-          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}        
-          secrets_to_redact: '${{ toJSON(secrets) }}'
-        run: |
-             if [ -z "$AWS_ACCESS_KEY_ID" ]; then echo "Missing AWS_ACCESS_KEY_ID"; exit 1; fi
-             if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then echo "Missing AWS_SECRET_ACCESS_KEY"; exit 1; fi
-             if [ -z "$AWS_SESSION_TOKEN" ]; then echo "Missing AWS_SESSION_TOKEN"; exit 1; fi
-             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-             aws configure set aws_session_token $AWS_SESSION_TOKEN
-             aws configure set region $EKS_REGION
+    #  - name: Configure AWS credentials
+    #    env:
+    #      GITHUB_STEP: Setting EKS credentials
+    #      OTLP_PROTOCOL: HTTPS
+    #      WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+    #      WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+    #      OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+    #      OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+    #      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+    #      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+    #      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}        
+    #      secrets_to_redact: '${{ toJSON(secrets) }}'
+    #    run: |
+    #         if [ -z "$AWS_ACCESS_KEY_ID" ]; then echo "Missing AWS_ACCESS_KEY_ID"; exit 1; fi
+    #         if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then echo "Missing AWS_SECRET_ACCESS_KEY"; exit 1; fi
+    #         if [ -z "$AWS_SESSION_TOKEN" ]; then echo "Missing AWS_SESSION_TOKEN"; exit 1; fi
+    #         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    #         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    #         aws configure set aws_session_token $AWS_SESSION_TOKEN
+    #         aws configure set region $EKS_REGION
 
-      - name: Update kubeconfig for EKS
-        run: |
-            aws eks update-kubeconfig --name $CLUSTER_NAME --region $EKS_REGION
-        env:
-          GITHUB_STEP: Setting up EKS connection
-          EKS_REGION: ${{ secrets.EKS_REGION }}
-          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
-          OTLP_PROTOCOL: HTTPS
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
-          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
-          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}               
-          secrets_to_redact: '${{ toJSON(secrets) }}'
+     # - name: Update kubeconfig for EKS
+     #   run: |
+     #       aws eks update-kubeconfig --name $CLUSTER_NAME --region $EKS_REGION
+     #   env:
+     #     GITHUB_STEP: Setting up EKS connection
+     #     EKS_REGION: ${{ secrets.EKS_REGION }}
+     #     CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+     #     OTLP_PROTOCOL: HTTPS
+     #     WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+     #     WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+     #     OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+     #     OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+     #     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+     #     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+     #     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}               
+     #     secrets_to_redact: '${{ toJSON(secrets) }}'
 
-      - name: Test kubectl access
-        env:
-          GITHUB_STEP: Validate EKS connection
-          OTLP_PROTOCOL: HTTPS
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
-          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
-          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
-          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}      
-        run: |
-            kubectl get pods -A
+      # - name: Test kubectl access
+      #  env:
+      #    GITHUB_STEP: Validate EKS connection
+      #    OTLP_PROTOCOL: HTTPS
+      #    WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+      #    WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+      #    OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+      #    OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+      #    OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+      #    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+      #    OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}      
+      #  run: |
+      #      kubectl get pods -A
   
 
       - name: Kubectl tool installer
@@ -211,6 +211,40 @@ jobs:
           chmod +x skaffold
           sudo mv skaffold /usr/local/bin/
 
+      - name: Push build start SDLC event to Dynatrace
+        env:
+          GITHUB_STEP: Buid start SLDC event
+          OTLP_PROTOCOL: HTTPS
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}                  
+          RELEASE_ID: ${{ env.RELEASE_VERSION }}
+          DYNATRACE_API_TOKEN: ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+          DYNATRACE_SDLCEVENT_ENDPOINT: ${{ secrets.DYNATRACE_SDLCEVENT_ENDPOINT }}
+        run: |
+          curl -X POST $DYNATRACE_SDLCEVENT_ENDPOINT \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Api-Token $DYNATRACE_API_TOKEN" \
+            -d '{
+              "event.kind": "SDLC_EVENT",
+              "event.type": "Build",
+              "event.status": "started",
+              "event.category": "task",
+              "event.provider": "github.com",
+              "source": "GitHub Actions",
+              "artifact.name": "unguard-proxy-service",
+              "artifact.version": "'${RELEASE_ID}'",
+              "cicd.pipeline.name": "${{ github.workflow }}",
+              "cicd.pipeline.run.id": "${{ github.run_id }}",
+              
+              "cicd.pipeline.run.url.full": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "ciBackLink": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
+            
       - name: Build and Push Skaffold Image
         env:
           GITHUB_STEP: Build unguard ${{ env.RELEASE_VERSION }}
@@ -226,6 +260,42 @@ jobs:
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
         run: |
           skaffold build --default-repo=docker.io/nikhilgoenka --tag=${RELEASE_ID} --push
+
+      - name: Push build end SDLC event to Dynatrace
+        env:
+          GITHUB_STEP: Buid end SLDC event
+          OTLP_PROTOCOL: HTTPS
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}                  
+          RELEASE_ID: ${{ env.RELEASE_VERSION }}
+          DYNATRACE_API_TOKEN: ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
+          DYNATRACE_SDLCEVENT_ENDPOINT: ${{ secrets.DYNATRACE_SDLCEVENT_ENDPOINT }}
+        run: |
+          curl -X POST $DYNATRACE_SDLCEVENT_ENDPOINT \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Api-Token $DYNATRACE_API_TOKEN" \
+            -d '{
+              "event.kind": "SDLC_EVENT",
+              "event.type": "Build",
+              "event.status": "ended",
+              "event.category": "task",
+              "event.provider": "github.com",
+              "source": "GitHub Actions",
+              "artifact.name": "unguard-proxy-service",
+              "artifact.version": "'${RELEASE_ID}'",
+              "cicd.pipeline.name": "${{ github.workflow }}",
+              "cicd.pipeline.run.id": "${{ github.run_id }}",
+              "vcs.ref.base.revision": "${{ github.sha }}",
+              "vcs.ref.head.name": "staging",
+              "cicd.pipeline.run.url.full": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "ciBackLink": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
+          
 
       - name: Deploy to EKS
         env:
