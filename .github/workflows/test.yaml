@@ -362,7 +362,7 @@ jobs:
                 "spec": {
                   "containers": [
                     {
-                      "name": "-service",
+                      "name": "membership-service",
                       "env": [
                         {
                           "name": "DT_RELEASE_VERSION",
