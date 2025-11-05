@@ -261,7 +261,7 @@ jobs:
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
         run: |
-          skaffold build --default-repo=docker.io/nikhilgoenka --tag=${RELEASE_ID} --push
+          skaffold build --default-repo=docker.io/nikhilgoenka --tag=${RELEASE_ID} --push --cache-artifacts=false
 
       - name: Push build end SDLC event to Dynatrace
         env:
