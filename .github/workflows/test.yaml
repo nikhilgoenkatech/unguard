@@ -153,27 +153,15 @@ jobs:
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}            
         uses: Azure/setup-kubectl@v3
 
-      - name: Calculate next release version
+      - name: Calculate commit-based release ID
         id: version
         env:
-            GITHUB_STEP: Setting up release information
-            OTLP_PROTOCOL: HTTPS
-            RELEASE_ID: ${{ env.RELEASE_VERSION }}
-            WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-            WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
-            OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
-            OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${{ secrets.DYNATRACE_OTEL_API_TOKEN }}
-            OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}
-            OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
-            OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
-          latest=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
-          IFS='.' read -ra parts <<< "${latest#v}"
-          major=${parts[0]}
-          minor=$((parts[1] + 1))
-          echo "RELEASE_VERSION=v${major}.${minor}.0" >> $GITHUB_ENV
-          echo "IMAGE_TAG_unguard_membership_service=v${major}.${minor}.0" >> $GITHUB_ENV
-          
+            COMMIT_SHA=${GITHUB_SHA:0:7} # Extract first 7 characters of commit SHA
+            echo "RELEASE_VERSION=${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "IMAGE_TAG_unguard_membership_service=${COMMIT_SHA}" >> $GITHUB_ENV
+            
       - name: Docker login
         env:
           GITHUB_STEP: Login to docker
@@ -261,7 +249,7 @@ jobs:
           OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
         run: |
-          skaffold build --default-repo=docker.io/nikhilgoenka --tag=${RELEASE_ID} --push --cache-artifacts=false
+          skaffold build --default-repo=docker.io/nikhilgoenka --tag=${RELEASE_VERSION} --push --cache-artifacts=false
 
       - name: Push build end SDLC event to Dynatrace
         env:
