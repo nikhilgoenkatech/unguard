@@ -50,18 +50,19 @@ namespace MembershipService.Controllers
 
         await connection.OpenAsync();
 
-        string selectQuery = "SELECT membership FROM membership WHERE userid = " + userid;
+        string selectQuery = "SELECT membership FROM membership WHERE userid = @userid";
 
         _logger.LogInformation($"Executing query: {selectQuery}");
 
         using (var selectCmd = new MySqlCommand(selectQuery, connection))
         {
+          selectCmd.Parameters.AddWithValue("@userid", userid);
           try
           {
             object result = await selectCmd.ExecuteScalarAsync();
             if (result != null)
             {
-              _logger.LogInformation($@"Membership status of userid {userid}: {result}");
+              _logger.LogInformation($"Membership status of userid {userid}: {result}");
               return Ok(result);
             }
             else
@@ -69,9 +70,11 @@ namespace MembershipService.Controllers
               _logger.LogInformation($"Membership status of userid {userid} not found");
 
               // If no membership entry exists, insert a new one
-              string insertQuery = $@"INSERT INTO membership (userid, membership) VALUES ({userid}, ""FREE"")";
+              string insertQuery = "INSERT INTO membership (userid, membership) VALUES (@userid, @membership)";
               using (var insertCmd = new MySqlCommand(insertQuery, connection))
               {
+                insertCmd.Parameters.AddWithValue("@userid", userid);
+                insertCmd.Parameters.AddWithValue("@membership", "FREE");
                 int rowsAffected = await insertCmd.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 {
@@ -104,13 +107,15 @@ namespace MembershipService.Controllers
 
         _logger.LogInformation($"INSERT requested => userid: {userid}, membership: {membership}");
 
-        string query = "INSERT INTO membership (userid, membership) VALUES (" + userid + ",\"" + membership + "\") ON DUPLICATE KEY UPDATE membership = \"" + membership + "\"";
+        string query = "INSERT INTO membership (userid, membership) VALUES (@userid, @membership) ON DUPLICATE KEY UPDATE membership = @membership";
 
         _logger.LogInformation($"Executing query: {query}");
 
 
         using (var cmd = new MySqlCommand(query, connection))
         {
+          cmd.Parameters.AddWithValue("@userid", userid);
+          cmd.Parameters.AddWithValue("@membership", membership);
           try
           {
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
